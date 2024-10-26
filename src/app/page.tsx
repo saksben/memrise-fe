@@ -1,101 +1,108 @@
-import Image from "next/image";
+// Home page, displays user's profile and a list of their selected languages
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import Link from "next/link";
+import React from "react";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+// TODO: Add dropdown select at top left. Title is 'All Courses'. Top section is Filter Results: [All Courses, With Goal Set, and Teaching]. Bottom section is By Category: [All language categories to choose from]. Home page starts with all their languages and courses, then user can select language/category and view all their courses from that language/category.
+// TODO: 3 dots settings. Quit course.
+// TODO: grid dots settings => modal. Options to learn new words, classic review, and speed review.
+// TODO: button at top right of courses to review all items from all courses in the language/category
+
+interface CourseTypes {
+  courseId: number;
+  slug: string;
+  name: string;
+  progress: number;
+  itemsLearned: number;
+  itemsTotal: number;
+  difficultWords: number;
 }
+
+const courses: CourseTypes[] = [
+  {
+    courseId: 1,
+    slug: 'french-1',
+    name: "French 1",
+    progress: 100,
+    itemsLearned: 222,
+    itemsTotal: 222,
+    difficultWords: 0,
+  },
+  {
+    courseId: 2,
+    slug: 'learn-basic-french',
+    name: "Learn Basic French",
+    progress: 100,
+    itemsLearned: 328,
+    itemsTotal: 328,
+    difficultWords: 0,
+  },
+  {
+    courseId: 3,
+    slug: 'advanced-french',
+    name: "Advanced French",
+    progress: 3,
+    itemsLearned: 49,
+    itemsTotal: 1256,
+    difficultWords: 3,
+  },
+];
+
+const Home = () => {
+  return (
+    <main>
+      <div className="p-[4rem] flex flex-col gap-4">
+        {courses.map((course) => (
+          <div
+            key={course.courseId}
+            className="flex gap-6 font-bold border-2 border-neutral-300 rounded-xl p-[1rem]"
+          >
+            <div>
+              <div className="size-[4rem] rounded-full bg-black"></div>
+            </div>
+            <div className="w-full flex flex-col gap-3">
+              <Link href={`/course/${course.courseId}/${course.slug}`} className="text-3xl">{course.name}</Link>
+              <div className="flex gap-8">
+                <span>{course.progress}%</span>
+                <div className="">
+                  <span>{`${course.itemsLearned} / ${course.itemsTotal}`}</span>
+                  <span className="font-normal"> items learned</span>
+                </div>
+              </div>
+              <div>
+                <div className="w-full bg-neutral-300 h-5 rounded z-1">
+                  <div
+                    className={`w-[${course.progress}%] bg-yellow-500 h-full rounded z-100`}
+                  ></div>
+                </div>
+              </div>
+              <div className="py-2 flex justify-between w-full items-center">
+                <div className="flex gap-8 text-sky-900">
+                  <div className="flex gap-3 items-center">
+                    <div className="border border-black size-5"></div>
+                    <div>{course.itemsLearned}</div>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <div className="border border-black size-5"></div>
+                    <div>{course.difficultWords}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Link
+                    href=""
+                    className="bg-yellow-500 py-3 px-4 rounded-xl text-xl border-b-4 border-b-yellow-600 hover:bg-yellow-400 hover:border-b-yellow-500"
+                  >
+                    Learn new words
+                  </Link>
+                  <button className="bg-sky-900 hover:bg-sky-800 size-14 rounded-xl"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+};
+
+export default Home;
