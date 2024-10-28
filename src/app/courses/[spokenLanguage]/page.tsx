@@ -6,12 +6,12 @@ import Link from "next/link";
 
 import React from "react";
 
-const LanguageBox = ({ flag, name }) => {
+const LanguageBox = ({ flag, name, knownLang, slug }) => {
   return (
-    <li className="flex items-center gap-2 py-3 px-2 border bg-white">
+    <Link href={`/courses/${knownLang}/${slug}`} className="flex items-center gap-2 py-3 px-2 border bg-white">
       <div className="rounded-full bg-black size-4">{flag}</div>
       <div className="text-sm font-bold">{name}</div>
-    </li>
+    </Link>
   );
 };
 
@@ -20,21 +20,25 @@ const languages = [
     languageId: 1,
     flag: "",
     name: "Spanish (Mexico)",
+    slug: 'spanish-mexico'
   },
   {
     languageId: 2,
     flag: "",
     name: "French",
+    slug: 'french'
   },
   {
     languageId: 3,
     flag: "",
     name: "English (US)",
+    slug: 'english-us'
   },
   {
     languageId: 4,
     flag: "",
     name: "Chinese (Simplified)",
+    slug: 'chinese-simplified'
   },
 ];
 
@@ -123,14 +127,15 @@ const courses = [
   },
 ];
 
+
 const CoursesPage = () => {
-  const [selected, setSelected] = React.useState("English (US)");
+  const [selected, setSelected] = React.useState(languages[2].name);
 
   const LanguageSelect = ({ children }) => {
     return (
       <>
         <select
-          value={selected}
+          value={selected.name}
           onChange={(e) => {
             setSelected(e.target.value);
           }}
@@ -174,6 +179,8 @@ const CoursesPage = () => {
                   key={language.languageId}
                   flag={language.flag}
                   name={language.name}
+                  knownLang={languages.find((lang) => lang.name === selected).slug}
+                  slug={language.slug}
                 />
               ))}
             </ul>
