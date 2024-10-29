@@ -8,7 +8,10 @@ import React from "react";
 
 const LanguageBox = ({ flag, name, knownLang, slug }) => {
   return (
-    <Link href={`/courses/${knownLang}/${slug}`} className="flex items-center gap-2 py-3 px-2 border bg-white">
+    <Link
+      href={`/courses/${knownLang}/${slug}`}
+      className="flex items-center gap-2 py-3 px-2 border bg-white"
+    >
       <div className="rounded-full bg-black size-4">{flag}</div>
       <div className="text-sm font-bold">{name}</div>
     </Link>
@@ -20,25 +23,25 @@ const languages = [
     languageId: 1,
     flag: "",
     name: "Spanish (Mexico)",
-    slug: 'spanish-mexico'
+    slug: "spanish-mexico",
   },
   {
     languageId: 2,
     flag: "",
     name: "French",
-    slug: 'french'
+    slug: "french",
   },
   {
     languageId: 3,
     flag: "",
     name: "English (US)",
-    slug: 'english-us'
+    slug: "english-us",
   },
   {
     languageId: 4,
     flag: "",
     name: "Chinese (Simplified)",
-    slug: 'chinese-simplified'
+    slug: "chinese-simplified",
   },
 ];
 
@@ -127,17 +130,16 @@ const courses = [
   },
 ];
 
-
 const CoursesPage = () => {
-  const [selected, setSelected] = React.useState(languages[2].name);
+  const [selected, setSelected] = React.useState(languages[2].languageId);
 
   const LanguageSelect = ({ children }) => {
     return (
       <>
         <select
-          value={selected.name}
+          value={selected}
           onChange={(e) => {
-            setSelected(e.target.value);
+            setSelected(+e.target.value);
           }}
           className="flex items-center gap-2 p-2 border"
         >
@@ -152,7 +154,10 @@ const CoursesPage = () => {
       <section className="flex justify-between items-center py-5 px-[4rem] border-b bg-white">
         <h1 className="text-2xl font-bold">Courses</h1>
         <div>
-          <Link href='/course/create' className="py-2 px-4 border border-gray-400 bg-green-500 rounded-md shadow-md text-white text-sm">
+          <Link
+            href="/course/create"
+            className="py-2 px-4 border border-gray-400 bg-green-500 rounded-md shadow-md text-white text-sm"
+          >
             Create a course
           </Link>
           {/* Search */}
@@ -166,7 +171,7 @@ const CoursesPage = () => {
             <p className="font-bold mb-2 text-sm">I speak:</p>
             <LanguageSelect>
               {languages.map((language) => (
-                <option value={language.name}>{language.name}</option>
+                <option value={language.languageId}>{language.name}</option>
               ))}
             </LanguageSelect>
           </div>
@@ -179,7 +184,9 @@ const CoursesPage = () => {
                   key={language.languageId}
                   flag={language.flag}
                   name={language.name}
-                  knownLang={languages.find((lang) => lang.name === selected).slug}
+                  knownLang={
+                    languages.find((lang) => lang.languageId === selected)?.slug
+                  }
                   slug={language.slug}
                 />
               ))}
