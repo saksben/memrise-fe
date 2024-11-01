@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-// TODO: add language slug to top categories languages when clicked
+// ALL language courses
 
 import React from "react";
 
@@ -171,7 +171,7 @@ const CoursesPage = () => {
             <p className="font-bold mb-2 text-sm">I speak:</p>
             <LanguageSelect>
               {languages.map((language) => (
-                <option value={language.languageId}>{language.name}</option>
+                <option key={language.languageId} value={language.languageId}>{language.name}</option>
               ))}
             </LanguageSelect>
           </div>

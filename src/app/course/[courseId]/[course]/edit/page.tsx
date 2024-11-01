@@ -134,9 +134,10 @@ const EditCoursePage = () => {
   const LessonHeader = ({ id, index, name, words }) => {
     const [wordName, setWordName] = React.useState();
     const [wordTranslation, setWordTranslation] = React.useState();
-    const [hidden, setHidden] = React.useState<boolean>(false);
+    const [hidden, setHidden] = React.useState<boolean>(true);
 
     const handleHidden = (e) => {
+      e.preventDefault();
       setHidden(!hidden);
     };
 
@@ -169,7 +170,10 @@ const EditCoursePage = () => {
               >
                 Show/Hide
               </button>
-              <Link href={`/course/${course.id}/${course.slug}/${index}`} className="hover:bg-neutral-200 py-1 px-3">
+              <Link
+                href={`/course/${course.id}/${course.slug}/${index}`}
+                className="hover:bg-neutral-200 py-1 px-3"
+              >
                 Preview
               </Link>
               <button className="hover:bg-neutral-200 py-1 px-3">
@@ -182,7 +186,7 @@ const EditCoursePage = () => {
           </div>
           {!hidden && (
             <div className="flex flex-col bg-white">
-              <p className='text-sm font-bold py-4 px-2'>
+              <p className="text-sm font-bold py-4 px-2">
                 Test on {course.learnLanguage}, prompt with{" "}
                 {course.knownLanguage}
               </p>
@@ -197,9 +201,9 @@ const EditCoursePage = () => {
                   {words.map((word) => (
                     <tr key={word.id}>
                       <td className="py-2 border-t w-1/2 pl-[6rem] relative group">
-                      <div className='absolute group-hover:visible invisible left-10 top-1/2 -translate-y-1/2'>
-                        <button className='font-bold text-xl'>x</button>
-                      </div>
+                        <div className="absolute group-hover:visible invisible left-10 top-1/2 -translate-y-1/2">
+                          <button className="font-bold text-xl">x</button>
+                        </div>
                         {word.name}
                       </td>
                       <td className="py-2 border-t w-1/2 pl-[6rem]">
@@ -215,7 +219,9 @@ const EditCoursePage = () => {
                   <p className="text-sm font-bold py-1 w-3/4">Add words:</p>
                 </div>
                 <div className="w-full flex justify-center hover:bg-sky-200 relative group">
-                    <button className='group-hover:visible invisible cursor-pointer absolute text-3xl left-2 top-1/2 -translate-y-1/2 font-bold'>+</button>
+                  <button className="group-hover:visible invisible cursor-pointer absolute text-3xl left-2 top-1/2 -translate-y-1/2 font-bold">
+                    +
+                  </button>
                   <div className="flex justify-between hover:bg-sky-200 w-3/4 py-3">
                     <input
                       className="border rounded p-1 w-1/3 text-sm"
@@ -243,7 +249,7 @@ const EditCoursePage = () => {
 
   return (
     <>
-      <main className="px-1">
+      <main className="px-1 pb-[2rem]">
         <section>
           <select className="p-2 rounded my-5 text-sm font-bold">
             <option hidden>+ Add level</option>
@@ -252,16 +258,17 @@ const EditCoursePage = () => {
           </select>
         </section>
         <section>
-          <form  className="flex flex-col gap-6">
-              {lessons.map((lesson, index) => (
-                <LessonHeader
-                  key={lesson.id}
-                  id={lesson.id}
-                  index={index}
-                  name={lesson.name}
-                  words={lesson.words}
-                />
-              ))}
+          <form className="flex flex-col gap-6">
+            {lessons.map((lesson, index) => (
+              <LessonHeader
+                key={lesson.id}
+                id={lesson.id}
+                index={index}
+                name={lesson.name}
+                words={lesson.words}
+              />
+            ))}
+            <button className='bg-green-500 w-max py-2 px-3 text-sm font-bold text-white self-end rounded-md'>Save and Continue</button>
           </form>
         </section>
       </main>
