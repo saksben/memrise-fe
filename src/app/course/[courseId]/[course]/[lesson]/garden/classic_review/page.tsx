@@ -217,7 +217,7 @@ const FillBlankRound: React.FC<{
   };
 
   const handleSubmit = () => {
-    if (input.toLowerCase() === word.translation.toLowerCase()) {
+    if (input.toLowerCase() === word.name.toLowerCase()) {
       onCorrect();
     } else {
       onIncorrect();
@@ -231,7 +231,7 @@ const FillBlankRound: React.FC<{
         <h2 className="text-neutral-500 font-bold text-xl">
           Type the correct translation
         </h2>
-        <p className="text-center font-bold py-[2rem] text-2xl">{word.name}</p>
+        <p className="text-center font-bold py-[2rem] text-2xl">{word.translation}</p>
         <div className="flex flex-col">
           <label className="text-xs uppercase font-black pb-2">
             {course.language}
