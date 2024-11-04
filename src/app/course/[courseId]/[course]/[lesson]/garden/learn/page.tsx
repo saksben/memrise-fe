@@ -114,7 +114,7 @@ const GameContainer: React.FC<{ words: Word[] }> = () => {
 
   // End of game
   if (currentRound >= gameRounds.length) {
-    return <div>Game Over! Your Score: {score}</div>;
+    return <div className='font-bold text-center py-[10rem]'>Game Over! Your Score: {score}</div>;
   }
 
   const { word, roundType } = gameRounds[currentRound];
