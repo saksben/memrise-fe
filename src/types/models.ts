@@ -14,21 +14,26 @@ export type User = {
 export type Language = {
   id: number;
   name: string;
+  slug: string;
 };
 
 export type Course = {
   id: number;
   name: string;
+  slug: string;
   description?: string;
   authorId: number;
   knownLanguageId: number;
   learnLanguageId: number;
+  lessons: Lesson[];
 };
 
 export type Lesson = {
   id: number;
   name: string;
+  lessonIndex: number;
   courseId: number;
+  words: Word[];
 };
 
 export type Word = {
@@ -43,7 +48,7 @@ export type Word = {
   progress: number;
   isDifficult: boolean;
   isIgnored: boolean;
-  timeTilReview: string; // ISO date string
+  timeTilReview?: string; // ISO date string
   lessonId: number;
 };
 
