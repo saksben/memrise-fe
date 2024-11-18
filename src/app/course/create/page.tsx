@@ -1,42 +1,60 @@
 "use client";
 
+import { Language } from "@/types/models";
+import { createCourse, getLanguages } from "@/util/api";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 // Create course
 // Immediately takes the user to /course/[courseId]/[course]/edit
-
-const learnLanguages = [
-  { id: 1, name: "Spanish (Mexico)" },
-  { id: 2, name: "French" },
-  { id: 3, name: "English (US)" },
-];
-
-const knownLanguages = [
-  { id: 1, name: "Spanish (Mexico)" },
-  { id: 2, name: "French" },
-  { id: 3, name: "English (US)" },
-];
-
-const language = 'English (US)'
+// TODO: separate knownLanguages and learnLanguages
+// TODO: update authorId in POST call once users are created
+// TODO: error handling
 
 const CourseCreate = () => {
-  const [name, setName] = React.useState();
-  const [learnLang, setLearnLang] = React.useState();
-  const [knownLang, setKnownLang] = React.useState(language);
+  const [name, setName] = React.useState("");
+  const [learnLang, setLearnLang] = React.useState<Language>();
+  const [knownLang, setKnownLang] = React.useState<Language>();
+  const [learnLanguages, setLearnLanguages] = React.useState<Language[]>([]);
+  const [knownLanguages, setKnownLanguages] = React.useState<Language[]>([]);
   const [tags, setTags] = React.useState();
   const [description, setDescription] = React.useState();
   const [shortDescription, setShortDescription] = React.useState();
+
+  const router = useRouter();
+
+  // Fetch all possible languages to learn and all possible native languages
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const langData = await getLanguages();
+        setLearnLanguages(langData);
+        setKnownLanguages(langData);
+      } catch (error) {
+        console.error("Error fetching languages:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Fetch the user's native language
+  React.useEffect(() => {
+    if (knownLanguages.length > 0) {
+      const foundLang = knownLanguages.find((lang) => lang.id === 3);
+      setKnownLang(foundLang);
+    }
+  }, [knownLanguages]);
 
   const handleName = (e) => {
     setName(e.target.value);
   };
 
   const handleLearnLang = (e) => {
-    setLearnLang(e.target.value);
+    setLearnLang(learnLanguages.find((lang) => lang.name === e.target.value));
   };
 
   const handleKnownLang = (e) => {
-    setKnownLang(e.target.value);
+    setKnownLang(knownLanguages.find((lang) => lang.name === e.target.value));
   };
 
   const handleTags = (e) => {
@@ -50,9 +68,23 @@ const CourseCreate = () => {
   const handleShortDescription = (e) => {
     setShortDescription(e.target.value);
   };
-
-  const handleSubmit = (e) => {
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      const slug = name?.toLowerCase().split(" ").join("-");
+      const course = await createCourse({
+        name: name,
+        slug: slug,
+        description: description,
+        authorId: 1,
+        knownLanguageId: knownLang?.id,
+        learnLanguageId: learnLang?.id,
+      });
+      router.push(`/course/${String(course.id)}/${slug}/edit`);
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
   };
 
   return (
@@ -73,7 +105,7 @@ const CourseCreate = () => {
                 <label htmlFor="learn-lang">Teaching</label>
                 <select
                   id="learn-lang"
-                  value={learnLang}
+                  value={learnLang?.name}
                   onChange={handleLearnLang}
                 >
                   <option>Please select one...</option>
@@ -89,7 +121,7 @@ const CourseCreate = () => {
                 <div className="flex gap-2 items-center">
                   <select
                     id="known-lang"
-                    value={knownLang}
+                    value={knownLang?.name}
                     onChange={handleKnownLang}
                   >
                     {knownLanguages.map((knownLangOption) => (

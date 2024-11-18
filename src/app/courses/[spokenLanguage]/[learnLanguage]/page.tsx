@@ -2,6 +2,8 @@
 
 "use client";
 
+import { Course, Language, User } from "@/types/models";
+import { getCourses, getLanguage, getLanguages, getUsers } from "@/util/api";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -21,41 +23,14 @@ const LanguageBox = ({ flag, name, knownLang, slug }) => {
   );
 };
 
-const languages = [
-  {
-    languageId: 1,
-    flag: "",
-    name: "Spanish (Mexico)",
-    slug: "spanish-mexico",
-  },
-  {
-    languageId: 2,
-    flag: "",
-    name: "French",
-    slug: "french",
-  },
-  {
-    languageId: 3,
-    flag: "",
-    name: "English (US)",
-    slug: "english-us",
-  },
-  {
-    languageId: 4,
-    flag: "",
-    name: "Chinese (Simplified)",
-    slug: "chinese-simplified",
-  },
-];
-
 const CourseBox = ({
   courseId,
   slug,
   learnLanguage,
   author,
   name,
-  enrollments,
-  avgTime,
+  // enrollments,
+  // avgTime,
 }) => {
   return (
     <>
@@ -81,11 +56,9 @@ const CourseBox = ({
             {name}
           </Link>
           <div className="flex text-sm border-t">
-            <div className="py-2 px-4">
-              <span>{enrollments}</span>
-            </div>
+            <div className="py-2 px-4">{/* <span>{enrollments}</span> */}</div>
             <div className="p-2 pl-6 border-l">
-              <span>{avgTime}</span>
+              {/* <span>{avgTime}</span> */}
             </div>
           </div>
         </div>
@@ -94,59 +67,71 @@ const CourseBox = ({
   );
 };
 
-const courses = [
-  {
-    courseId: 1,
-    slug: "french-1",
-    learnLanguage: "French",
-    author: "Memrise",
-    name: "French 1",
-    enrollments: "2.1m",
-    avgTime: "7h",
-  },
-  {
-    courseId: 2,
-    slug: "french-2",
-    learnLanguage: "French",
-    author: "Memrise",
-    name: "French 2",
-    enrollments: "2.1m",
-    avgTime: "7h",
-  },
-  {
-    courseId: 3,
-    slug: "french-3",
-    learnLanguage: "French",
-    author: "Memrise",
-    name: "French 3",
-    enrollments: "2.1m",
-    avgTime: "7h",
-  },
-  {
-    courseId: 4,
-    slug: "french-4",
-    learnLanguage: "French",
-    author: "Memrise",
-    name: "French 4",
-    enrollments: "2.1m",
-    avgTime: "7h",
-  },
-];
-
 const LearnLanguageCoursesPage = () => {
-  const [selected, setSelected] = React.useState(languages[2].languageId);
+  const [courses, setCourses] = React.useState<Course[]>([]);
+  const [languages, setLanguages] = React.useState<Language[]>([]);
+  const [targetLang, setTargetLang] = React.useState<Language>();
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [selected, setSelected] = React.useState<Language>();
   const params = useParams();
-  const targetLang = languages.find(
-    (lang) => lang.slug === params.learnLanguage
-  );
 
+  React.useEffect(() => {
+    const fetchLanguages = async () => {
+      try {
+        const languagesData = await getLanguages();
+        setLanguages(languagesData);
+      } catch (error) {
+        console.error("Error fetching languages:", error);
+      }
+    };
+    fetchLanguages();
+  }, []);
+
+  React.useEffect(() => {
+    if (languages.length > 0) {
+      const foundLang = languages.find(
+        (lang) => lang.slug === params.learnLanguage
+      );
+      setTargetLang(foundLang);
+      const getPrimaryLanguage = async () => {
+        try {
+          const primaryLanguage = await getLanguage("3");
+          setSelected(primaryLanguage);
+        } catch (error) {
+          console.error("Error fetching primary language:", error);
+        }
+      };
+      getPrimaryLanguage();
+    }
+  }, [languages, params.learnLanguage]);
+
+  React.useEffect(() => {
+    if (!targetLang) return;
+
+    const fetchCoursesAndUsers = async () => {
+      try {
+        const coursesData = await getCourses();
+        const filteredCourses = coursesData.filter(
+          (course) => course.learnLanguageId === targetLang.id
+        );
+        setCourses(filteredCourses);
+
+        const usersData = await getUsers();
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchCoursesAndUsers();
+  }, [targetLang]);
+  
   const LanguageSelect = ({ children }) => {
     return (
       <>
         <select
-          value={selected}
+          value={selected?.id}
           onChange={(e) => {
-            setSelected(+e.target.value);
+            setSelected(languages.find((lang) => lang.id === +e.target.value));
           }}
           className="flex items-center gap-2 p-2 border"
         >
@@ -160,12 +145,15 @@ const LearnLanguageCoursesPage = () => {
     <>
       <section className="flex justify-between items-center py-5 px-[4rem] border-b bg-white">
         <div className="flex items-center gap-[2rem]">
-          <Link href="/courses" className="text-sm font-bold">
+          <Link
+            href={`/courses/${params.spokenLanguage}`}
+            className="text-sm font-bold"
+          >
             {"<"} All Courses
           </Link>
-          <div className='flex items-center gap-2'>
-            <div className='size-7 rounded-full bg-black'></div>
-              <h1 className="text-xl">{targetLang?.name} Courses</h1>
+          <div className="flex items-center gap-2">
+            <div className="size-7 rounded-full bg-black"></div>
+            <h1 className="text-xl">{targetLang?.name} Courses</h1>
           </div>
         </div>
         <div>
@@ -186,7 +174,7 @@ const LearnLanguageCoursesPage = () => {
             <p className="font-bold mb-2 text-sm">I speak:</p>
             <LanguageSelect>
               {languages.map((language) => (
-                <option key={language.languageId} value={language.languageId}>
+                <option key={language.id} value={language.id}>
                   {language.name}
                 </option>
               ))}
@@ -198,11 +186,11 @@ const LearnLanguageCoursesPage = () => {
             <ul className="group">
               {languages.map((language) => (
                 <LanguageBox
-                  key={language.languageId}
-                  flag={language.flag}
+                  key={language.id}
+                  flag={""}
                   name={language.name}
                   knownLang={
-                    languages.find((lang) => lang.languageId === selected)?.slug
+                    languages.find((lang) => lang.id === selected?.id)?.slug
                   }
                   slug={language.slug}
                 />
@@ -214,14 +202,19 @@ const LearnLanguageCoursesPage = () => {
         <div className="flex gap-x-3 gap-y-5 flex-wrap max-w-[50rem]">
           {courses.map((course) => (
             <CourseBox
-              key={course.courseId}
+              key={course.id}
               slug={course.slug}
-              courseId={course.courseId}
-              learnLanguage={course.learnLanguage}
-              author={course.author}
+              courseId={course.id}
+              learnLanguage={
+                languages.find((lang) => lang.id === course.learnLanguageId)
+                  ?.name
+              }
+              author={
+                users.find((auth) => auth.id === course.authorId)?.username
+              }
               name={course.name}
-              enrollments={course.enrollments}
-              avgTime={course.avgTime}
+              // enrollments={course.enrollments}
+              // avgTime={course.avgTime}
             />
           ))}
         </div>

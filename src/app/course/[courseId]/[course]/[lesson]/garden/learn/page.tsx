@@ -1,23 +1,21 @@
 "use client";
 
+// TODO: fix weird glitch where it's not all equal rounds for all words
+// TODO: change algorithm to be more like Memrise
+
+import { Course, Language, Lesson, Word } from "@/types/models";
+import {
+  getCourse,
+  getLanguage,
+  getLanguages,
+  getLesson,
+  updateWord,
+} from "@/util/api";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 // /learn?course_id={courseId}&level_index=1
 
 import React from "react";
-
-const course = {
-  language: "French",
-  languageSlug: "french",
-  lessons: [{ id: 1, index: 1, name: "Launchpad" }],
-};
-
-const knownlanguage = "English (US)";
-
-type Word = {
-  id: number;
-  name: string;
-  translation: string;
-};
 
 type RoundType = "intro" | "match" | "fill-blank";
 
@@ -32,48 +30,56 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 const GameContainer: React.FC<{ words: Word[] }> = () => {
-  const words: Word[] = [
-    {
-      id: 0,
-      name: "jour",
-      translation: "day",
-    },
-    {
-      id: 1,
-      name: "nuit",
-      translation: "night",
-    },
-    {
-      id: 2,
-      name: "salut",
-      translation: "hi",
-    },
-    {
-      id: 3,
-      name: "non",
-      translation: "no",
-    },
-    {
-      id: 4,
-      name: "au revoir",
-      translation: "goodbye",
-    },
-  ];
+  const params = useParams();
+
+  const [languages, setLanguages] = React.useState<Language[]>([]);
+  const [language, setLanguage] = React.useState<Language>();
+  const [course, setCourse] = React.useState<Course>();
+  const [lesson, setLesson] = React.useState<Lesson>();
+  const [words, setWords] = React.useState<Word[]>();
+
+  React.useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const languagesData = await getLanguages();
+        setLanguages(languagesData);
+        const courseData = await getCourse(params.courseId);
+        setCourse(courseData);
+        const languageData = await getLanguage(
+          String(courseData.learnLanguageId)
+        );
+        setLanguage(languageData);
+        const lessonData = await getLesson(params.lesson);
+        setLesson(lessonData);
+        if (lessonData) {
+          let gameWords = [];
+          for (let i = 0; i < 5; i++) {
+            if (lessonData.words[i].progress < 5) {
+              gameWords.push(lessonData.words[i]);
+            }
+          }
+          setWords(gameWords);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const [gameRounds, setGameRounds] = React.useState<GameRound[]>([]);
   const [currentRound, setCurrentRound] = React.useState(0);
   const [score, setScore] = React.useState(0);
 
   React.useEffect(() => {
-    generateInitialRounds();
-  }, []);
+    if (words) generateInitialRounds();
+  }, [words]);
 
   const generateInitialRounds = () => {
     const introAndFirstRounds: GameRound[] = [];
     const additionalRounds: GameRound[] = [];
-
     // Step 1: Add intro and first match round for each word
-    words.forEach((word) => {
+    words?.forEach((word) => {
       // Fixed "intro" and "match" rounds for each word
       introAndFirstRounds.push({ word, roundType: "intro" });
       introAndFirstRounds.push({ word, roundType: "match" });
@@ -102,9 +108,22 @@ const GameContainer: React.FC<{ words: Word[] }> = () => {
   };
 
   // Handle correct answer and move to next round
-  const handleCorrectAnswer = () => {
+  const handleCorrectAnswer = async (word: Word) => {
     setScore((prev) => prev + 1);
     setCurrentRound((prev) => prev + 1);
+
+    setWords((prevWords) =>
+      prevWords?.map((w) =>
+        w.id === word.id ? { ...w, progress: w.progress + 1 } : w
+      )
+    );
+    try {
+      await updateWord(String(word.id), {
+        progress: word.progress + 1,
+      });
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   // Handle incorrect answer and move to next round
@@ -114,10 +133,30 @@ const GameContainer: React.FC<{ words: Word[] }> = () => {
 
   // End of game
   if (currentRound >= gameRounds.length) {
-    return <div className='font-bold text-center py-[10rem]'>Game Over! Your Score: {score}</div>;
+    return (
+      <div className="font-bold text-center py-[10rem]">
+        Game Over! Your Score: {score}
+      </div>
+    );
   }
 
   const { word, roundType } = gameRounds[currentRound];
+
+  const increaseProgress = async (word: Word) => {
+    try {
+      await updateWord(String(word.id), {
+        progress: word.progress + 1,
+      });
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const languageName = language?.name;
+
+  const knownLanguage = languages.find(
+    (lang) => lang.id === course?.knownLanguageId
+  )?.name;
 
   return (
     <div className="w-full flex flex-col items-center pb-[2rem]">
@@ -126,11 +165,15 @@ const GameContainer: React.FC<{ words: Word[] }> = () => {
           <div></div>
           <h1 className="flex gap-5">
             <span className="text-white">Learn new words:</span>
-            {course.language} - {course.lessons[0].name}
+            {languageName} - {lesson?.name}
           </h1>
         </div>
         <div>
-          <Link href="">X</Link>
+          <Link
+            href={`/course/${params.courseId}/${params.course}/${params.lesson}`}
+          >
+            X
+          </Link>
         </div>
       </section>
       <div className="w-3/4">
@@ -146,19 +189,25 @@ const GameContainer: React.FC<{ words: Word[] }> = () => {
         <section className="px-[2rem] flex flex-col gap-[1rem]">
           {roundType === "intro" ? (
             <IntroRound
+              language={languageName}
+              knownLanguage={knownLanguage}
               word={word}
-              onContinue={() => setCurrentRound((prev) => prev + 1)}
+              onContinue={() => {
+                setCurrentRound((prev) => prev + 1);
+                increaseProgress(word);
+              }}
             />
           ) : roundType === "match" ? (
             <MatchRound
               word={word}
-              onCorrect={handleCorrectAnswer}
+              onCorrect={() => handleCorrectAnswer(word)}
               onIncorrect={handleIncorrectAnswer}
             />
           ) : (
             <FillBlankRound
+              language={languageName}
               word={word}
-              onCorrect={handleCorrectAnswer}
+              onCorrect={() => handleCorrectAnswer(word)}
               onIncorrect={handleIncorrectAnswer}
             />
           )}
@@ -170,19 +219,21 @@ const GameContainer: React.FC<{ words: Word[] }> = () => {
 };
 
 // Introductory round component
-const IntroRound: React.FC<{ word: Word; onContinue: () => void }> = ({
-  word,
-  onContinue,
-}) => {
+const IntroRound: React.FC<{
+  language: string | undefined;
+  knownLanguage: string | undefined;
+  word: Word;
+  onContinue: () => void;
+}> = ({ language, knownLanguage, word, onContinue }) => {
   return (
     <div className="flex w-full justify-between">
       <div className="w-full flex flex-col gap-[2rem]">
         <div className="flex flex-col">
-          <label className="text-xs uppercase">{course.language}</label>
+          <label className="text-xs uppercase">{language}</label>
           <p className="text-4xl font-bold">{word.name}</p>
         </div>
         <div className="flex flex-col pb-[1rem] border-b-2">
-          <label className="text-xs uppercase">{knownlanguage}</label>
+          <label className="text-xs uppercase">{knownLanguage}</label>
           <p className="text-2xl font-bold">{word.translation}</p>
         </div>
       </div>
@@ -257,7 +308,7 @@ const MatchRound: React.FC<{
         </div>
         <div className="px-[1rem]">
           <button className="bg-neutral-300 font-bold py-2 rounded border-b-4 border-b-neutral-400 hover:bg-neutral-400">
-            I don't know
+            I don&#39;t know
           </button>
           <div></div>
           {/* Mark difficult word and mark ignore */}
@@ -272,10 +323,11 @@ const MatchRound: React.FC<{
 };
 
 const FillBlankRound: React.FC<{
+  language: string | undefined;
   word: Word;
   onCorrect: () => void;
   onIncorrect: () => void;
-}> = ({ word, onCorrect, onIncorrect }) => {
+}> = ({ language, word, onCorrect, onIncorrect }) => {
   const [input, setInput] = React.useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,7 +354,7 @@ const FillBlankRound: React.FC<{
         </p>
         <div className="flex flex-col">
           <label className="text-xs uppercase font-black pb-2">
-            {course.language}
+            {language}
           </label>
           <input
             type="text"
@@ -322,7 +374,7 @@ const FillBlankRound: React.FC<{
       </div>
       <div className="px-[1rem]">
         <button className="bg-neutral-300 font-bold py-2 rounded border-b-4 border-b-neutral-400 hover:bg-neutral-400">
-          I don't know
+          I don&#39;t know
         </button>
         <div></div>
         {/* Mark difficult word and mark ignore */}

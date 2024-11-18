@@ -1,140 +1,89 @@
 "use client";
 
+// TODO: confirm delete
+// TODO: duplicate button
+
+import { Course, Language, Lesson } from "@/types/models";
+import {
+  createLesson,
+  createWord,
+  deleteLesson,
+  deleteWord,
+  getCourse,
+  getLanguages,
+  updateLesson,
+  updateWord,
+} from "@/util/api";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import React from "react";
 
-// Edit course
-// Has 3 tabs: words (where you first land), contributors, and details (/course/[courseId]/[course]/edit/details)
-// Save and continue button
-
-const course = {
-  id: 1,
-  slug: "french-1",
-  learnLanguage: "French",
-  languageSlug: "french",
-  knownLanguage: "English (US)",
-};
-
-const lessons = [
-  {
-    id: 1,
-    index: 1,
-    name: "Launchpad",
-    words: [
-      { id: 1, name: "salut", translation: "hi", timeTilReview: 4 },
-      {
-        id: 2,
-        name: "quoi de neuf?",
-        translation: "what's up?",
-        timeTilReview: 4,
-      },
-      { id: 3, name: "allons-y !", translation: "let's go!", timeTilReview: 4 },
-      { id: 4, name: "santé", translation: "bottoms up!", timeTilReview: 4 },
-      { id: 5, name: "oui", translation: "yes", timeTilReview: 4 },
-      { id: 6, name: "non", translation: "no", timeTilReview: 4 },
-      {
-        id: 7,
-        name: "s'il vous plaît",
-        translation: "please",
-        timeTilReview: 4,
-      },
-      { id: 8, name: "merci", translation: "thank you", timeTilReview: 4 },
-      {
-        id: 9,
-        name: "bonjour",
-        translation: "good morning; good day",
-        timeTilReview: 4,
-      },
-      {
-        id: 10,
-        name: "bonne nuit",
-        translation: "good night",
-        timeTilReview: 4,
-      },
-      {
-        id: 11,
-        name: "à bientôt",
-        translation: "see you later",
-        timeTilReview: 4,
-      },
-      { id: 12, name: "au revoir", translation: "goodbye", timeTilReview: 4 },
-    ],
-  },
-  {
-    id: 2,
-    index: 2,
-    name: "I Come in Peace",
-    words: [
-      { id: 1, name: "ça", translation: "it; this; that", timeTilReview: 4 },
-      {
-        id: 2,
-        name: "comment",
-        translation: "how",
-        timeTilReview: 4,
-      },
-      {
-        id: 3,
-        name: "comment ça va ?",
-        translation: "how are you?",
-        timeTilReview: 4,
-      },
-      { id: 4, name: "très", translation: "very", timeTilReview: 4 },
-      { id: 5, name: "je", translation: "I", timeTilReview: 4 },
-      { id: 6, name: "bien", translation: "well; good", timeTilReview: 4 },
-      {
-        id: 7,
-        name: "très bien",
-        translation: "very good",
-        timeTilReview: 4,
-      },
-      {
-        id: 8,
-        name: "je vais très bien",
-        translation: "I'm very well",
-        timeTilReview: 4,
-      },
-      {
-        id: 9,
-        name: "tu",
-        translation: "you (singular)",
-        timeTilReview: 4,
-      },
-      {
-        id: 10,
-        name: "te",
-        translation: "you; yourself (singular)",
-        timeTilReview: 4,
-      },
-      {
-        id: 11,
-        name: "tu t'appelles",
-        translation: "what's your name?",
-        timeTilReview: 4,
-      },
-      { id: 12, name: "me", translation: "me; myself", timeTilReview: 4 },
-      {
-        id: 13,
-        name: "je m'appelle ...",
-        translation: "my name is ...",
-        timeTilReview: 4,
-      },
-      { id: 14, name: "me", translation: "me; myself", timeTilReview: 4 },
-      { id: 15, name: "le génie", translation: "the genius", timeTilReview: 4 },
-      {
-        id: 16,
-        name: "tu es un génie !",
-        translation: "you're a genius!",
-        timeTilReview: 4,
-      },
-    ],
-  },
-];
-
 const EditCoursePage = () => {
+  const [course, setCourse] = React.useState<Course>();
+  const [learnLang, setLearnLang] = React.useState<Language>();
+  const [knownLang, setKnownLang] = React.useState<Language>();
+  const [lessons, setLessons] = React.useState<Lesson[]>([]);
+
+  const params = useParams();
+
+  React.useEffect(() => {
+    const getCourseData = async () => {
+      try {
+        // Fetch Course
+        const courseData = await getCourse(params.courseId);
+        setCourse(courseData);
+
+        // Add Lessons, sorted by their index
+        const sortedLessons = courseData.lessons.sort(
+          (a, b) => a.lessonIndex - b.lessonIndex
+        );
+        setLessons(sortedLessons);
+
+        // Fetch learning Language
+        const langData = await getLanguages();
+        const fetchedLearnLang = langData.find(
+          (lang) => lang.id === courseData.learnLanguageId
+        );
+        const fetchedKnownLang = langData.find(
+          (lang) => lang.id === courseData.knownLanguageId
+        );
+
+        setLearnLang(fetchedLearnLang);
+        setKnownLang(fetchedKnownLang);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    getCourseData();
+  }, [params.courseId]);
+
+  const handleAddLesson = async (e) => {
+    e.preventDefault();
+    try {
+      await createLesson({
+        name: "New Level",
+        lessonIndex: lessons.length + 1,
+        courseId: +params.courseId,
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   const LessonHeader = ({ id, index, name, words }) => {
-    const [wordName, setWordName] = React.useState();
-    const [wordTranslation, setWordTranslation] = React.useState();
+    const [wordName, setWordName] = React.useState<string>("");
+    const [wordTranslation, setWordTranslation] = React.useState<string>("");
     const [hidden, setHidden] = React.useState<boolean>(true);
+    const [isEditing, setIsEditing] = React.useState<boolean>(false);
+    const [lessonName, setLessonName] = React.useState<string>(name);
+    const [editableWords, setEditableWords] = React.useState(() =>
+      words.map((word) => ({
+        ...word,
+        isEditingName: false,
+        isEditingTranslation: false,
+      }))
+    );
 
     const handleHidden = (e) => {
       e.preventDefault();
@@ -149,6 +98,116 @@ const EditCoursePage = () => {
       setWordTranslation(e.target.value);
     };
 
+    const handleLessonNameChange = (e) => {
+      setLessonName(e.target.value);
+    };
+
+    // Turn into an editable input when clicked
+    const handleEditClick = () => {
+      setIsEditing(true);
+    };
+
+    const handleNameSubmit = async (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        setIsEditing(false);
+        try {
+          await updateLesson(id, { name: lessonName });
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+    };
+
+    const handleLessonDelete = async (e) => {
+      e.preventDefault();
+      try {
+        // Update lessons in state
+        const updatedLessons = lessons
+          .filter((lesson) => lesson.id !== id)
+          .sort((a, b) => a.lessonIndex - b.lessonIndex);
+
+        // Reindexed lessons
+        const reindexedLessons = updatedLessons.map((lesson, newIndex) => ({
+          ...lesson,
+          lessonIndex: newIndex + 1, // Assign new indices starting from 1
+        }));
+
+        // Save reindexed lessons to the backend
+        await Promise.all(
+          reindexedLessons.map((lesson) =>
+            updateLesson(String(lesson.id), { lessonIndex: lesson.lessonIndex })
+          )
+        );
+
+        // Update state with reindexed lessons
+        setLessons(reindexedLessons);
+
+        // Delete the selected lesson
+        await deleteLesson(String(id));
+
+        console.log("deleted");
+      } catch (error) {
+        console.error("Error:", error);
+      }
+      window.location.reload();
+    };
+
+    const handleAddWord = async (e) => {
+      e.preventDefault();
+      try {
+        await createWord({
+          name: wordName,
+          translation: wordTranslation,
+          lessonId: id,
+        });
+        window.location.reload();
+        console.log("Word created!");
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    const toggleWordEdit = (wordId, field) => {
+      setEditableWords((prevWords) =>
+        prevWords.map((word) =>
+          word.id === wordId ? { ...word, [field]: !word[field] } : word
+        )
+      );
+    };
+
+    const handleWordUpdate = async (wordId, field, value) => {
+      try {
+        // Update the backend
+        await updateWord(wordId, { [field]: value });
+        setEditableWords((prevWords) =>
+          prevWords.map((word) =>
+            word.id === wordId
+              ? {
+                  ...word,
+                  [field]: false,
+                  [field === "name" ? "name" : "translation"]: value,
+                }
+              : word
+          )
+        );
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    const handleWordDelete = async (wordId) => {
+      try {
+        await deleteWord(String(wordId));
+        setEditableWords((prevWords) =>
+          prevWords.filter((word) => word.id !== wordId)
+        );
+        console.log("Word deleted!");
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
     return (
       <>
         <div>
@@ -157,10 +216,26 @@ const EditCoursePage = () => {
             className="flex justify-between p-4 bg-sky-300 text-white rounded items-center"
           >
             <div className="flex items-center gap-6">
-              <span className="font-bold text-xl">{index + 1}</span>
+              <span className="font-bold text-xl">{index}</span>
               <h3 className="flex gap-3 items-center">
-                <span className="text-xl font-bold">{name}</span>
-                <span className="text-xl">{course.learnLanguage}</span>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={lessonName}
+                    onChange={handleLessonNameChange}
+                    onKeyDown={handleNameSubmit}
+                    className="text-sm font-bold border rounded py-1 px-2 text-black"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="text-xl font-bold hover:underline"
+                    onClick={handleEditClick}
+                  >
+                    {lessonName}
+                  </span>
+                )}
+                <span className="text-xl">{learnLang?.name}</span>
               </h3>
             </div>
             <div className="text-black font-bold text-xs bg-neutral-100 flex rounded">
@@ -171,7 +246,7 @@ const EditCoursePage = () => {
                 Show/Hide
               </button>
               <Link
-                href={`/course/${course.id}/${course.slug}/${index}`}
+                href={`/course/${course?.id}/${course?.slug}/${index}`}
                 className="hover:bg-neutral-200 py-1 px-3"
               >
                 Preview
@@ -179,7 +254,10 @@ const EditCoursePage = () => {
               <button className="hover:bg-neutral-200 py-1 px-3">
                 Duplicate
               </button>
-              <button className="hover:bg-neutral-200 py-1 px-2 rounded-r">
+              <button
+                onClick={handleLessonDelete}
+                className="hover:bg-neutral-200 py-1 px-2 rounded-r"
+              >
                 Delete
               </button>
             </div>
@@ -187,27 +265,95 @@ const EditCoursePage = () => {
           {!hidden && (
             <div className="flex flex-col bg-white">
               <p className="text-sm font-bold py-4 px-2">
-                Test on {course.learnLanguage}, prompt with{" "}
-                {course.knownLanguage}
+                Test on {learnLang?.name}, prompt with {knownLang?.name}
               </p>
               <table className="w-full border-b">
                 <thead>
                   <tr className="text-left">
-                    <th className="w-1/2 pl-[6rem]">{course.learnLanguage}</th>
-                    <th className="w-1/2 pl-[6rem]">{course.knownLanguage}</th>
+                    <th className="w-1/2 pl-[6rem]">{learnLang?.name}</th>
+                    <th className="w-1/2 pl-[6rem]">{knownLang?.name}</th>
                   </tr>
                 </thead>
                 <tbody className="">
-                  {words.map((word) => (
+                  {editableWords.map((word) => (
                     <tr key={word.id}>
                       <td className="py-2 border-t w-1/2 pl-[6rem] relative group">
                         <div className="absolute group-hover:visible invisible left-10 top-1/2 -translate-y-1/2">
-                          <button className="font-bold text-xl">x</button>
+                          <button
+                            onClick={() => handleWordDelete(word.id)}
+                            className="font-bold text-xl"
+                          >
+                            x
+                          </button>
                         </div>
-                        {word.name}
+                        {word.isEditingName ? (
+                          <input
+                            type="text"
+                            value={word.name}
+                            onChange={(e) =>
+                              setEditableWords((prevWords) =>
+                                prevWords.map((w) =>
+                                  w.id === word.id
+                                    ? { ...w, name: e.target.value }
+                                    : w
+                                )
+                              )
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                toggleWordEdit(word.id, "isEditingName");
+                                handleWordUpdate(word.id, "name", word.name);
+                              }
+                            }}
+                            autoFocus
+                            className="border rounded p-2"
+                          />
+                        ) : (
+                          <span
+                            onClick={() =>
+                              toggleWordEdit(word.id, "isEditingName")
+                            }
+                          >
+                            {word.name}
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 border-t w-1/2 pl-[6rem]">
-                        {word.translation}
+                        {word.isEditingTranslation ? (
+                          <input
+                            type="text"
+                            value={word.translation}
+                            onChange={(e) =>
+                              setEditableWords((prevWords) =>
+                                prevWords.map((w) =>
+                                  w.id === word.id
+                                    ? { ...w, translation: e.target.value }
+                                    : w
+                                )
+                              )
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                toggleWordEdit(word.id, "isEditingTranslation");
+                                handleWordUpdate(
+                                  word.id,
+                                  "translation",
+                                  word.translation
+                                );
+                              }
+                            }}
+                            autoFocus
+                            className="border rounded p-2"
+                          />
+                        ) : (
+                          <span
+                            onClick={() =>
+                              toggleWordEdit(word.id, "isEditingTranslation")
+                            }
+                          >
+                            {word.translation}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -219,7 +365,10 @@ const EditCoursePage = () => {
                   <p className="text-sm font-bold py-1 w-3/4">Add words:</p>
                 </div>
                 <div className="w-full flex justify-center hover:bg-sky-200 relative group">
-                  <button className="group-hover:visible invisible cursor-pointer absolute text-3xl left-2 top-1/2 -translate-y-1/2 font-bold">
+                  <button
+                    onClick={handleAddWord}
+                    className="group-hover:visible invisible cursor-pointer absolute text-3xl left-2 top-1/2 -translate-y-1/2 font-bold"
+                  >
                     +
                   </button>
                   <div className="flex justify-between hover:bg-sky-200 w-3/4 py-3">
@@ -231,7 +380,7 @@ const EditCoursePage = () => {
                       onChange={handleWordName}
                     />
                     <input
-                      className="border rounded p-1 w-1/3"
+                      className="border rounded p-1 w-1/3 text-sm"
                       id={wordTranslation}
                       value={wordTranslation}
                       name={wordTranslation}
@@ -251,24 +400,33 @@ const EditCoursePage = () => {
     <>
       <main className="px-1 pb-[2rem]">
         <section>
-          <select className="p-2 rounded my-5 text-sm font-bold">
+          <select
+            onChange={(e) => {
+              if (e.target.value === "addLanguage") {
+                handleAddLesson(e);
+              }
+            }}
+            className="p-2 rounded my-5 text-sm font-bold hover:bg-neutral-200 cursor-pointer"
+          >
             <option hidden>+ Add level</option>
-            <option>{course.learnLanguage}</option>
-            <option>Multimedia</option>
+            <option value="addLanguage">{learnLang?.name}</option>
+            <option value="multimedia">Multimedia</option>
           </select>
         </section>
         <section>
           <form className="flex flex-col gap-6">
-            {lessons.map((lesson, index) => (
+            {lessons.map((lesson) => (
               <LessonHeader
                 key={lesson.id}
                 id={lesson.id}
-                index={index}
+                index={lesson.lessonIndex}
                 name={lesson.name}
                 words={lesson.words}
               />
             ))}
-            <button className='bg-green-500 w-max py-2 px-3 text-sm font-bold text-white self-end rounded-md'>Save and Continue</button>
+            <button className="bg-green-500 w-max py-2 px-3 text-sm font-bold text-white self-end rounded-md">
+              Save and Continue
+            </button>
           </form>
         </section>
       </main>

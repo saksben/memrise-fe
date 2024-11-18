@@ -1,34 +1,73 @@
+"use client";
+
 // Course page showing all lessons, or if only 1 lesson just shows the first lesson's list of words under the course overview
 
+import { Course, User } from "@/types/models";
+import { getCourse, getUser } from "@/util/api";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import React from "react";
 
-const course = {
-  id: 1,
-  slug: "french-1",
-  name: "French 1",
-  author: "Memrise",
-  description: "Learn the basics of French.",
-  numLessons: 11,
-  wordsLearned: 49,
-  wordsTotal: 1256,
-  wordsIgnored: 0,
-  wordsToReview: 49,
-  language: "French",
-  languageSlug: "french",
-  lessons: [
-    { id: 1, index: 1, name: "Launchpad", progress: 2 },
-    { id: 2, index: 2, name: "I Come in Peace", progress: 2 },
-    { id: 3, index: 3, name: "Being Human", progress: 2 },
-    { id: 4, index: 4, name: "Fuel Your Vocab: Food", progress: 1 },
-    { id: 5, index: 5, name: "What Do You Like?", progress: 0 },
-    { id: 6, index: 6, name: "Where in the Universe?", progress: 0 },
-  ],
-  user: {
-    profilePic: "",
-  },
-};
+// TODO: user.profilePic
+// TODO: course pic
+// TODO: breadcrumbs
+// TODO: fix progress bar
+// TODO: the Review button will need its own game mode where it adds all course review words instead of just one lesson
 
 const CoursePage = () => {
+  const [course, setCourse] = React.useState<Course | null>(null);
+  const [author, setAuthor] = React.useState<User>();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const params = useParams();
+  const courseId = params.courseId;
+
+  // Get Course data
+  React.useEffect(() => {
+    const getCourseData = async () => {
+      try {
+        const data = await getCourse(courseId);
+        setCourse({ ...data, lessons: data.lessons });
+        if (data.authorId) {
+          const authorData = await getUser(String(data.authorId));
+          setAuthor(authorData);
+        }
+      } catch (error) {
+        console.error("Error fetching course data:", error);
+      }
+    };
+    getCourseData();
+  }, [courseId]);
+
+  if (!courseId) {
+    return <div>Loading...</div>;
+  }
+
+  let wordsLearned = 0;
+  let wordsTotal = 0;
+  let wordsToReview = 0;
+  let wordsIgnored = 0;
+
+  if (course) {
+    const now = new Date();
+    for (const lesson of course.lessons) {
+      for (const word of lesson.words) {
+        wordsTotal++;
+        if (word.progress === 5) {
+          wordsLearned++;
+        }
+        if (word.timeTilReview < now) {
+          wordsToReview++;
+        }
+        if (word.isIgnored) {
+          wordsIgnored++;
+        }
+      }
+    }
+  }
+
+  const wordsLearnedPercent = wordsLearned / wordsTotal;
+
   return (
     <>
       {/* Course Overview */}
@@ -44,24 +83,22 @@ const CoursePage = () => {
             <span>{`>`}</span>
             {/* <Link href=''>{category}</Link><span>{`>`}</span> */}
             {/* <Link href=''>{subCategory}</Link><span>{`>`}</span> */}
-            <Link href={`/courses/${course.languageSlug}`}>
-              {course.language}
-            </Link>
+            {/* <Link href={`/courses/${course?.slug}`}>{course.language}</Link> */}
           </div>
           {/* Description */}
-          <h1 className="text-2xl font-bold pt-2">{course.name}</h1>
-          <p className="text-wrap">{course.description}</p>
+          <h1 className="text-2xl font-bold pt-2">{course?.name}</h1>
+          <p className="text-wrap">{course?.description}</p>
         </div>
         {/* Profile section */}
         <div className="flex gap-4 justify-center max-w-[12rem] w-full">
           {/* Profile picture */}
           <div className="size-[2.5rem] bg-white rounded-sm">
-            {course.user.profilePic}
+            {/* {course.user.profilePic} */}
           </div>
           <p className="flex flex-col items-center text-xs text-neutral-400">
             Created by{" "}
             <span className="text-white text-base font-bold">
-              {course.author}
+              {author?.username}
             </span>
           </p>
         </div>
@@ -70,9 +107,12 @@ const CoursePage = () => {
       <section className="bg-white px-[3rem] p-3 border-b border-b-neutral-200 flex justify-between">
         <div className="rounded-full py-2 px-4 bg-slate-300 w-max text-sm font-bold">
           <div></div>
-          <span>{`Levels (${course.numLessons})`}</span>
+          <span>{`Levels (${course?.lessons?.length ?? 0})`}</span>
         </div>
-        <Link href={`/course/${course.id}/${course.slug}/edit`} className='font-bold text-sm hover:bg-neutral-200 flex items-center justify-center rounded-md py-2 px-3'>
+        <Link
+          href={`/course/${course?.id}/${course?.slug}/edit`}
+          className="font-bold text-sm hover:bg-neutral-200 flex items-center justify-center rounded-md py-2 px-3"
+        >
           <div></div>
           <span>Edit Course</span>
         </Link>
@@ -81,18 +121,16 @@ const CoursePage = () => {
         {/* Progress */}
         <section className="bg-white py-3 px-4 rounded">
           <div className="flex justify-between font-bold">
-            <p>{`${course.wordsLearned} / ${course.wordsTotal} (${
-              course.wordsLearned - course.wordsToReview
+            <p>{`${wordsLearned} / ${wordsTotal} (${
+              wordsTotal - wordsToReview
             } in long term memory)`}</p>
-            <p>{`${course.wordsIgnored} ignored`}</p>
+            <p>{`${wordsIgnored} ignored`}</p>
           </div>
           {/* Progress bar */}
           <div className="pt-3 pb-4">
             <div className="w-full bg-neutral-100 h-2 rounded z-1 border-t border-t-neutral-300">
               <div
-                className={`w-[${
-                  course.wordsLearned / course.wordsTotal
-                }%] bg-yellow-500 h-full rounded z-100`}
+                className={`w-[${wordsLearnedPercent}%] bg-yellow-500 h-full rounded z-100`}
               ></div>
             </div>
           </div>
@@ -105,16 +143,17 @@ const CoursePage = () => {
             <div className="flex gap-1 items-center py-2">
               {/* Speed review */}
               <Link href="" className="p-4 rounded-md bg-slate-300"></Link>
-              <Link
-                href=""
+              {/* Classic Review */}
+              {/* <Link
+                href={`/course/${params.courseId}/${params.course}/${params.lesson}/garden/classic_review`}
                 className="py-[0.35rem] px-3 rounded-md font-bold text-sm bg-slate-300"
-              >{`Review (${course.wordsToReview})`}</Link>
+              >{`Review (${wordsToReview})`}</Link> */}
             </div>
           </div>
         </section>
         {/* Lessons */}
         <section className="flex gap-4 flex-wrap max-w-[50rem]">
-          {course.lessons.map((lesson, index) => (
+          {course?.lessons.map((lesson, index) => (
             <Link
               href={`/course/${course.id}/${course.slug}/${lesson.id}`}
               key={lesson.id}

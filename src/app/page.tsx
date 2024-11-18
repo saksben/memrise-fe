@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React from "react";
 
+// TODO: add courses from BE once User auth is created
 // TODO: Add dropdown select at top left. Title is 'All Courses'. Top section is Filter Results: [All Courses, With Goal Set, and Teaching]. Bottom section is By Category: [All language categories to choose from]. Home page starts with all their languages and courses, then user can select language/category and view all their courses from that language/category.
 // TODO: 3 dots settings. Quit course.
 // TODO: grid dots settings => modal. Options to learn new words, classic review, and speed review.
@@ -49,6 +50,20 @@ const courses: CourseTypes[] = [
 ];
 
 const Home = () => {
+  // const [courses, setCourses] = React.useState([])
+  
+  // React.useEffect(() => {
+  //   const getCourses = async () => {
+  //     try {
+  //       const coursesData = await fetch(
+
+  //       )
+  //     } catch (error) {
+  //       console.error('Error fetching courses:', error)
+  //     }
+  //   }
+  // })
+
   return (
     <main>
       <div className="p-[4rem] flex flex-col gap-4">

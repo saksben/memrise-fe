@@ -117,7 +117,9 @@ export async function updateCourse(
 }
 
 export async function deleteCourse(id: string | string[]) {
-  return await request<void>(`/courses/${id}`);
+  return await request<void>(`/courses/${id}`, {
+    method: "DELETE",
+  });
 }
 
 // Lesson methods

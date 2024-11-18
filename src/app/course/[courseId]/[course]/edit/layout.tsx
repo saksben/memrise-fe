@@ -77,7 +77,7 @@ export default function EditLayout({
             </Link>
           </div>
           <Link
-            href=""
+            href={`/course/${course?.id}/${course?.slug}`}
             className="py-2 px-3 hover:bg-neutral-100 rounded-md text-sm font-bold"
           >
             Back to Course
